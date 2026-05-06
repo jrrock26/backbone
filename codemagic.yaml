@@ -1,20 +1,18 @@
 workflows:
   ios-build:
-    name: iOS Build (Expo Dev Client)
+    name: iOS Build (Expo Clean)
     environment:
       xcode: latest
       node: 18
 
     scripts:
       - name: Install dependencies
-        script: |
-          npm install
+        script: npm install
 
-      - name: Generate native iOS project
-        script: |
-          npx expo prebuild --clean --platform ios
+      - name: Expo prebuild
+        script: npx expo prebuild --clean --platform ios
 
-      - name: Install CocoaPods
+      - name: Install pods
         script: |
           cd ios
           pod install
