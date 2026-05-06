@@ -1,6 +1,7 @@
 workflows:
   ios-build:
-    name: iOS Build (VolleyballAI Clean)
+    name: iOS Build (VolleyballAI Signed)
+
     environment:
       xcode: latest
       node: 18
@@ -20,12 +21,7 @@ workflows:
           cd ios
           pod install
 
-      - name: Debug Schemes (optional but useful)
-        script: |
-          cd ios
-          xcodebuild -list -workspace VolleyballAI.xcworkspace
-
-      - name: Build iOS archive
+      - name: Build iOS archive (SIGNED)
         script: |
           cd ios
 
@@ -33,12 +29,17 @@ workflows:
 
           echo "Workspace detected: $WORKSPACE"
 
+          export DEVELOPER_TEAM="2G78XY4X97"
+
           xcodebuild \
             -workspace "$WORKSPACE" \
             -scheme "VolleyballAI" \
             -configuration Release \
             -sdk iphoneos \
-            -archivePath $CM_BUILD_DIR/build.xcarchive archive
+            -archivePath $CM_BUILD_DIR/build.xcarchive \
+            DEVELOPMENT_TEAM=$DEVELOPER_TEAM \
+            CODE_SIGN_STYLE=Automatic \
+            archive
 
     artifacts:
       - $CM_BUILD_DIR/build.xcarchive
