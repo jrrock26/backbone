@@ -1,6 +1,6 @@
 workflows:
-  ios-backbone:
-    name: iOS Build (Expo + VisionCamera)
+  ios-build:
+    name: iOS Build (Expo Dev Client)
     environment:
       xcode: latest
       node: 18
@@ -10,7 +10,7 @@ workflows:
         script: |
           npm install
 
-      - name: Expo prebuild (generate native ios project)
+      - name: Generate native iOS project
         script: |
           npx expo prebuild --clean --platform ios
 
@@ -22,13 +22,13 @@ workflows:
       - name: Build iOS archive
         script: |
           cd ios
+          SCHEME=$(ls *.xcodeproj | sed 's/.xcodeproj//')
           xcodebuild \
             -workspace *.xcworkspace \
-            -scheme $(ls *.xcodeproj | sed 's/.xcodeproj//') \
+            -scheme $SCHEME \
             -configuration Release \
             -sdk iphoneos \
             -archivePath $CM_BUILD_DIR/build.xcarchive archive
 
     artifacts:
       - $CM_BUILD_DIR/build.xcarchive
-      - build/ios/**/*.ipa
