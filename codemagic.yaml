@@ -1,49 +1,40 @@
 workflows:
   ios-build:
-    name: iOS Build (Expo Clean + Stable)
+    name: iOS Build (Expo Debug Schemes)
     environment:
       xcode: latest
       node: 18
 
     scripts:
-      # 1. Install JS deps
       - name: Install dependencies
         script: npm install
 
-      # 2. HARD reset native iOS project
       - name: Clean iOS folder
         script: rm -rf ios
 
-      # 3. Fresh Expo prebuild (this is critical)
       - name: Expo prebuild
         script: npx expo prebuild --clean --platform ios
 
-      # 4. Install CocoaPods
       - name: Install pods
         script: |
           cd ios
           pod install
 
-      # 5. Build iOS archive (NO guessing, NO dynamic scheme hacks)
-      - name: Build iOS archive
+      - name: Debug Xcode Schemes (IMPORTANT)
         script: |
           cd ios
+          xcodebuild -list -workspace VolleyballAI.xcworkspace
 
-          echo "Inspecting generated iOS structure..."
-          ls -la
+      - name: Build iOS archive (NO SCHEME YET - DEBUG MODE)
+        script: |
+          cd ios
 
           WORKSPACE=$(find . -maxdepth 1 -name "*.xcworkspace" | head -n 1)
 
           echo "Workspace detected: $WORKSPACE"
 
-          if [ -z "$WORKSPACE" ]; then
-            echo "ERROR: No valid .xcworkspace generated"
-            exit 1
-          fi
-
           xcodebuild \
             -workspace "$WORKSPACE" \
-            -scheme "volleyballai" \
             -configuration Release \
             -sdk iphoneos \
             -archivePath $CM_BUILD_DIR/build.xcarchive archive
