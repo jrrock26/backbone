@@ -1,6 +1,6 @@
 workflows:
   ios-build:
-    name: iOS Build (Scheme Discovery Only)
+    name: iOS Build (VolleyballAI Clean)
     environment:
       xcode: latest
       node: 18
@@ -15,15 +15,30 @@ workflows:
       - name: Expo prebuild
         script: npx expo prebuild --clean --platform ios
 
-      - name: Install pods
+      - name: Install CocoaPods
         script: |
           cd ios
           pod install
 
-      - name: List Xcode Schemes (CRITICAL STEP)
+      - name: Debug Schemes (optional but useful)
         script: |
           cd ios
           xcodebuild -list -workspace VolleyballAI.xcworkspace
+
+      - name: Build iOS archive
+        script: |
+          cd ios
+
+          WORKSPACE=$(find . -maxdepth 1 -name "*.xcworkspace" | head -n 1)
+
+          echo "Workspace detected: $WORKSPACE"
+
+          xcodebuild \
+            -workspace "$WORKSPACE" \
+            -scheme "VolleyballAI" \
+            -configuration Release \
+            -sdk iphoneos \
+            -archivePath $CM_BUILD_DIR/build.xcarchive archive
 
     artifacts:
       - $CM_BUILD_DIR/build.xcarchive
