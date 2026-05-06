@@ -1,20 +1,41 @@
-- name: Build iOS archive
-  script: |
-    cd ios
+workflows:
+  ios-build:
+    name: iOS Build (VolleyballAI)
 
-    WORKSPACE=$(find . -maxdepth 1 -name "*.xcworkspace" | head -n 1)
+    environment:
+      xcode: latest
+      node: 18
 
-    echo "Workspace: $WORKSPACE"
+    scripts:
+      - name: Install dependencies
+        script: npm install
 
-    export DEVELOPER_TEAM="2G78XY4X97"
+      - name: Expo prebuild
+        script: npx expo prebuild --clean --platform ios
 
-    xcodebuild \
-      -workspace "$WORKSPACE" \
-      -scheme "VolleyballAI" \
-      -configuration Release \
-      -sdk iphoneos \
-      -archivePath $CM_BUILD_DIR/build.xcarchive \
-      -allowProvisioningUpdates \
-      DEVELOPMENT_TEAM=$DEVELOPER_TEAM \
-      CODE_SIGN_STYLE=Automatic \
-      archive
+      - name: Install pods
+        script: |
+          cd ios
+          pod install
+
+      - name: Build iOS archive
+        script: |
+          cd ios
+
+          WORKSPACE=$(find . -maxdepth 1 -name "*.xcworkspace" | head -n 1)
+
+          export DEVELOPER_TEAM="2G78XY4X97"
+
+          xcodebuild \
+            -workspace "$WORKSPACE" \
+            -scheme "VolleyballAI" \
+            -configuration Release \
+            -sdk iphoneos \
+            -archivePath $CM_BUILD_DIR/build.xcarchive \
+            -allowProvisioningUpdates \
+            DEVELOPMENT_TEAM=$DEVELOPER_TEAM \
+            CODE_SIGN_STYLE=Automatic \
+            archive
+
+    artifacts:
+      - $CM_BUILD_DIR/build.xcarchive
