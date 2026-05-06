@@ -1,21 +1,52 @@
-- name: Build iOS archive
-  script: |
-    cd ios
+workflows:
+  ios-build:
+    name: iOS Build (Expo Clean + Stable)
+    environment:
+      xcode: latest
+      node: 18
 
-    echo "Finding valid xcworkspace..."
+    scripts:
+      # 1. Install JS deps
+      - name: Install dependencies
+        script: npm install
 
-    WORKSPACE=$(find . -maxdepth 1 -name "*.xcworkspace" | head -n 1)
+      # 2. HARD reset native iOS project
+      - name: Clean iOS folder
+        script: rm -rf ios
 
-    echo "Workspace found: $WORKSPACE"
+      # 3. Fresh Expo prebuild (this is critical)
+      - name: Expo prebuild
+        script: npx expo prebuild --clean --platform ios
 
-    if [ -z "$WORKSPACE" ]; then
-      echo "ERROR: No .xcworkspace found. Expo prebuild failed."
-      exit 1
-    fi
+      # 4. Install CocoaPods
+      - name: Install pods
+        script: |
+          cd ios
+          pod install
 
-    xcodebuild \
-      -workspace "$WORKSPACE" \
-      -scheme "volleyballai" \
-      -configuration Release \
-      -sdk iphoneos \
-      -archivePath $CM_BUILD_DIR/build.xcarchive archive
+      # 5. Build iOS archive (NO guessing, NO dynamic scheme hacks)
+      - name: Build iOS archive
+        script: |
+          cd ios
+
+          echo "Inspecting generated iOS structure..."
+          ls -la
+
+          WORKSPACE=$(find . -maxdepth 1 -name "*.xcworkspace" | head -n 1)
+
+          echo "Workspace detected: $WORKSPACE"
+
+          if [ -z "$WORKSPACE" ]; then
+            echo "ERROR: No valid .xcworkspace generated"
+            exit 1
+          fi
+
+          xcodebuild \
+            -workspace "$WORKSPACE" \
+            -scheme "volleyballai" \
+            -configuration Release \
+            -sdk iphoneos \
+            -archivePath $CM_BUILD_DIR/build.xcarchive archive
+
+    artifacts:
+      - $CM_BUILD_DIR/build.xcarchive
