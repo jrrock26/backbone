@@ -1,0 +1,48 @@
+workflows:
+  ios-backbone:
+    name: iOS Backbone Build
+    environment:
+      xcode: latest
+      node: latest
+    scripts:
+      - name: Install dependencies
+        script: |
+          npm install
+
+      - name: Patch Xcode project to include ReplayKitRecorder
+        script: |
+          cd ios
+          PROJECT=$(ls *.xcodeproj/project.pbxproj)
+
+          echo "Ensuring bridging header exists"
+          HEADER=$(find . -name "*Bridging-Header.h" | head -n 1)
+          if [ -z "$HEADER" ]; then
+            HEADER="backbone-clean/backbone-clean-Bridging-Header.h"
+            echo '#import "ReplayKitRecorder.h"' > $HEADER
+          else
+            echo '#import "ReplayKitRecorder.h"' >> $HEADER
+          fi
+
+          echo "Adding ReplayKitRecorder files to Xcode project"
+          /usr/libexec/PlistBuddy -c "Add :objects:ReplayKitRecorderSwiftFile string ios/ReplayKitRecorder/ReplayKitRecorder.swift" $PROJECT
+          /usr/libexec/PlistBuddy -c "Add :objects:ReplayKitRecorderHeaderFile string ios/ReplayKitRecorder/ReplayKitRecorder.h" $PROJECT
+          /usr/libexec/PlistBuddy -c "Add :objects:ReplayKitRecorderObjCFile string ios/ReplayKitRecorder/ReplayKitRecorder.m" $PROJECT
+
+      - name: Install CocoaPods
+        script: |
+          cd ios
+          pod install
+
+      - name: Build iOS
+        script: |
+          xcodebuild \
+            -workspace backbone-clean.xcworkspace \
+            -scheme backbone-clean \
+            -configuration Release \
+            -sdk iphoneos \
+            -archivePath $CM_BUILD_DIR/build.xcarchive \
+            archive
+
+    artifacts:
+      - build/ios/**/*.ipa
+      - $CM_BUILD_DIR/build.xcarchive
