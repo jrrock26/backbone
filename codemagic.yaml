@@ -18,16 +18,20 @@ workflows:
           cd ios
           pod install
 
+      - name: Install provisioning profile
+        script: |
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          echo "Installing provisioning profile..."
+          cp "$CM_PROVISIONING_PROFILE" ~/Library/MobileDevice/Provisioning\ Profiles/
+          ls ~/Library/MobileDevice/Provisioning\ Profiles
+
       - name: Build iOS archive (Manual Signing)
         script: |
           cd ios
 
           WORKSPACE=$(find . -maxdepth 1 -name "*.xcworkspace" | head -n 1)
 
-          # Your Apple Developer Team ID
           export DEVELOPMENT_TEAM="2G78XY4X97"
-
-          # IMPORTANT: This MUST match the EXACT name in Codemagic
           export PROFILE_NAME="VolleyballAI Distribution2"
 
           xcodebuild \
