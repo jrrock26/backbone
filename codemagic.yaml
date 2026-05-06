@@ -1,0 +1,11 @@
+workflows:
+  expo-build:
+    name: Expo Build
+    environment:
+      node: 18
+    scripts:
+      - npm install
+      - npx expo prebuild
+      - cd ios && pod install
+      - cd ..
+      - npx expo export
