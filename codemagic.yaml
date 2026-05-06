@@ -1,36 +1,21 @@
-workflows:
-  ios-build:
-    name: iOS Build (Expo Clean)
-    environment:
-      xcode: latest
-      node: 18
+- name: Build iOS archive
+  script: |
+    cd ios
 
-    scripts:
-      - name: Install dependencies
-        script: npm install
+    echo "Finding valid xcworkspace..."
 
-      - name: Expo prebuild
-        script: npx expo prebuild --clean --platform ios
+    WORKSPACE=$(find . -maxdepth 1 -name "*.xcworkspace" | head -n 1)
 
-      - name: Install pods
-        script: |
-          cd ios
-          pod install
+    echo "Workspace found: $WORKSPACE"
 
-      - name: Build iOS archive
-        script: |
-          cd ios
+    if [ -z "$WORKSPACE" ]; then
+      echo "ERROR: No .xcworkspace found. Expo prebuild failed."
+      exit 1
+    fi
 
-          WORKSPACE=$(ls *.xcworkspace | head -n 1)
-
-          echo "Workspace: $WORKSPACE"
-
-          xcodebuild \
-            -workspace "$WORKSPACE" \
-            -scheme "volleyballai" \
-            -configuration Release \
-            -sdk iphoneos \
-            -archivePath $CM_BUILD_DIR/build.xcarchive archive
-
-    artifacts:
-      - $CM_BUILD_DIR/build.xcarchive
+    xcodebuild \
+      -workspace "$WORKSPACE" \
+      -scheme "volleyballai" \
+      -configuration Release \
+      -sdk iphoneos \
+      -archivePath $CM_BUILD_DIR/build.xcarchive archive
